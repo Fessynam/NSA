@@ -47,19 +47,20 @@ npm test
 
 ## Login Credentials
 
-| Email | Password | Role |
+| Username or Email | Password | Role |
 |---|---|---|
-| `festus@nsa.com.na` | `NSA@2026` | Admin |
+| `festus.alpheus` or `festus@nsa.com.na` | `NSA@2026` | Admin |
 
-The account is seeded into the `users` table with a salted `scrypt` password hash (see `lib/auth.js` / `db.js`) — the plaintext password is never stored. Additional accounts (with Admin/Support/Viewer roles) can be created from **Settings** once logged in.
+Login accepts **either** the username or the email — whichever is typed, as long as the password matches. The account is seeded into the `users` table with a salted `scrypt` password hash (see `lib/auth.js` / `db.js`) — the plaintext password is never stored. Additional accounts (with Admin/Support/Viewer roles) can be created from **Settings** once logged in.
 
 ## How to Use
 
-1. **Log in** at `http://localhost:3000` with the credentials above. You're redirected to the dashboard on success.
+1. **Log in** at `http://localhost:3000` with the credentials above (username or email both work). You're redirected to the dashboard on success.
    - **Forgot password?** requests a reset link — since no email service is configured in this demo, the link is shown directly on screen instead of being emailed (clearly labeled as dev-mode).
    - Five failed attempts on one account triggers a 15-minute lockout, with a support-email pointer shown in the error message.
    - **Terms of Use** is available from the login footer at any time.
-2. **Dashboard** shows total employee/department counts and a bar-chart breakdown of employees per department.
+   - Sessions **auto-expire after 20 minutes of inactivity** (both server-enforced and detected client-side), returning you to login with a clear explanation rather than a silent failure.
+2. **Dashboard** shows total employee/department counts, a live date/time, and a bar-chart breakdown of employees per department. Admin and Support additionally see a **7-day login activity chart**, a **Recent Activity** feed, and a "Logins Today" stat card — all pulled from the same audit log as the Activity Log page.
 3. **Employees** (left sidebar):
    - **+ Add Employee** opens a modal for name, email, position, and department. *(Admin/Support only.)*
    - Click any column header (Name, Email, Position, Department) to **sort** by it — click again to reverse the direction.
@@ -108,7 +109,9 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 - **Passwords are salted and hashed** with Node's built-in `crypto.scryptSync` (no plaintext storage, no external bcrypt dependency), and must satisfy a policy of at least 8 characters combining 3 of 4 character classes (upper/lower/digit/symbol) — the same standard Azure AD and most enterprise policies use. This was tuned specifically so the seeded password `NSA@2026` (which has no lowercase letter) still passes, rather than special-casing the seed account around a stricter rule.
 - **Forgot password has no real email service behind it.** Rather than fake a "check your inbox" message that goes nowhere, the reset link is generated as a real, single-use, 30-minute-expiry token and displayed directly on screen, clearly labeled as dev-mode. The underlying flow (token generation, expiry, one-time use) is fully real; only the delivery channel is simulated.
 - **Login lockout** is 5 failed attempts → 15-minute lock, tracked in memory (fine for a single-instance demo; would move to a shared store like Redis in a multi-instance deployment).
+- **Sessions expire after 20 minutes of inactivity** (a sliding window — any authenticated request extends it), enforced server-side in `requireAuth` and mirrored client-side by an idle-activity timer, so an unattended browser tab can't stay logged in indefinitely.
 - Login uses a bearer-token session (kept in `localStorage`), sufficient for a single-instance demo app, not a production auth scheme (no refresh tokens, no CSRF protections needed since there are no cookies).
+- The login screen is a split-screen layout (branded static panel + form), deliberately without decorative animation — a bouncing/floating background reads as a demo toy rather than the enterprise system this is meant to look like.
 - Departments and employees are seeded with realistic simulation data (6 departments, 7 employees) per "create random departments for simulation."
 - Deleting a department unassigns (rather than deletes) any employees linked to it, to avoid silent data loss — this is exercised directly in the unit tests.
 - Navigation is a left sidebar (collapsing to a horizontal bar on tablet, and stacking on mobile) rather than a top bar, matching common admin-dashboard conventions and leaving more horizontal room for data tables.
@@ -128,6 +131,8 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 - **Real account security** — salted+hashed passwords, a password complexity policy, login-attempt lockout, and a real (if dev-mode-delivered) forgot/reset-password flow with single-use expiring tokens.
 - **System-wide activity log** — every login, logout, failed login, and CRUD action is recorded with who/what/when.
 - **User management** — admin-managed accounts with first name, surname, email, phone, and role.
+- **Idle-session timeout** — 20-minute sliding-window auto logout, enforced server-side and mirrored client-side, with a clear on-screen explanation rather than a silent failure.
+- **Dashboard activity widgets** (Admin/Support) — live date/time, a 7-day login-activity chart, a Recent Activity feed, and a "Logins Today" stat, all reusing the audit log.
 - **CSV export** for the Employees table (respects the current search filter).
 - **Sortable employee table** — click any column header to sort, click again to reverse.
 - **Department detail view** — see every employee assigned to a department, not just the count.
@@ -152,20 +157,25 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 ```
 server.js                 Express app + REST API routes, role middleware, activity logging
 db.js                      SQLite schema + seed data
-lib/auth.js                Password hashing (scrypt), complexity policy, email validation
+lib/auth.js                Password hashing (scrypt), complexity policy, username/email validation
+lib/session.js             Idle-session-expiry logic (pure function, unit tested)
 public/
-  index.html               Login (+ forgot/reset password, Terms of Use)
-  dashboard.html            Dashboard (stats + department breakdown)
+  index.html               Login — split-screen enterprise layout, username-or-email,
+                            forgot/reset password, Terms of Use
+  dashboard.html            Dashboard — stats, live clock, department breakdown,
+                            login-activity chart + recent-activity feed (admin/support)
   employees.html + js/employees.js       Employee CRUD UI (sort, search, CSV export)
   departments.html + js/departments.js    Department CRUD UI (with employee-list detail view)
   settings.html + js/settings.js          User accounts + system configuration (admin only)
   activity-log.html + js/activity-log.js  Audit trail viewer (admin/support only)
   js/common.js              Sidebar render, auth/role guards, API client, theme toggle,
                              toast notifications, custom confirm dialog, CSV export,
-                             modal dismissal (Escape/backdrop/close-button), sortable-table helper
+                             modal dismissal (Escape/backdrop/close-button), sortable-table
+                             helper, idle-timeout auto logout
   css/style.css             NSA palette, sidebar layout, responsive + dark-mode styles
   assets/nsa-logo.webp      Provided NSA logo asset
 docs/screenshots/          Screenshots used in this README
 test/employees.test.js     Unit tests — employee CRUD, department FK behavior
 test/auth.test.js          Unit tests — password hashing, complexity policy, email validation
+test/session.test.js       Unit tests — idle-session-expiry logic
 ```

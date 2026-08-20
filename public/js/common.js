@@ -11,6 +11,12 @@ const ICONS = {
   settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`
 };
 
+function formatTimestamp(sqliteTimestamp) {
+  const d = new Date(String(sqliteTimestamp).replace(' ', 'T') + 'Z');
+  if (isNaN(d.getTime())) return sqliteTimestamp;
+  return d.toLocaleString();
+}
+
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -49,6 +55,7 @@ function clearSession() {
   localStorage.removeItem('ems_token');
   localStorage.removeItem('ems_full_name');
   localStorage.removeItem('ems_email');
+  localStorage.removeItem('ems_username');
   localStorage.removeItem('ems_role');
 }
 
@@ -60,6 +67,12 @@ async function apiFetch(path, options = {}) {
   const res = await fetch(`/api${path}`, { ...options, headers });
 
   if (res.status === 401) {
+    let message = 'Your session has ended. Please log in again.';
+    try {
+      const body = await res.json();
+      if (body && body.error) message = body.error;
+    } catch (e) { /* no body */ }
+    sessionStorage.setItem('ems_session_message', message);
     clearSession();
     window.location.href = 'index.html';
     throw new Error('Unauthorized');
@@ -286,5 +299,30 @@ function sortRows(rows, key, dir) {
   });
 }
 
+/* --- Idle-timeout auto logout (mirrors the server's SESSION_IDLE_MS) --- */
+const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
+let idleTimer = null;
+
+function logoutWithMessage(message) {
+  sessionStorage.setItem('ems_session_message', message);
+  logout();
+}
+
+function resetIdleTimer() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    logoutWithMessage('You were signed out after 20 minutes of inactivity.');
+  }, IDLE_TIMEOUT_MS);
+}
+
+function setupIdleLogout() {
+  if (!getToken()) return;
+  ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+  resetIdleTimer();
+}
+
 initTheme();
 setupModalDismissal();
+setupIdleLogout();

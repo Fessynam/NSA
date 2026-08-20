@@ -2,7 +2,11 @@ const express = require('express');
 const crypto = require('node:crypto');
 const path = require('node:path');
 const db = require('./db');
-const { hashPassword, verifyPassword, validatePasswordComplexity, isValidEmail, PASSWORD_RULE_TEXT } = require('./lib/auth');
+const {
+  hashPassword, verifyPassword, validatePasswordComplexity, isValidEmail, PASSWORD_RULE_TEXT,
+  isValidUsername, USERNAME_RULE_TEXT
+} = require('./lib/auth');
+const { SESSION_IDLE_MS, isSessionExpired } = require('./lib/session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,10 +57,23 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const session = activeTokens.get(token);
+  if (isSessionExpired(session.lastActivity)) {
+    activeTokens.delete(token);
+    return res.status(401).json({ error: 'Your session expired due to inactivity. Please log in again.' });
+  }
+  session.lastActivity = Date.now(); // sliding expiration: any activity extends the session
   req.userEmail = session.email;
   req.userRole = session.role;
   next();
 }
+
+// Periodically sweep idle sessions out of memory so they don't linger indefinitely
+// between requests (requireAuth only catches them when the token is actually used again).
+setInterval(() => {
+  for (const [token, session] of activeTokens.entries()) {
+    if (isSessionExpired(session.lastActivity)) activeTokens.delete(token);
+  }
+}, 5 * 60 * 1000).unref();
 
 function requireRole(...roles) {
   return (req, res, next) => {
@@ -68,32 +85,42 @@ function requireRole(...roles) {
 }
 
 // --- Auth ---
+// "identifier" accepts either the account's username or its email — whichever the user types,
+// as long as the password matches.
 app.post('/api/login', (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+  const { identifier, password } = req.body || {};
+  if (!identifier || !password) return res.status(400).json({ error: 'Username or email, and password, are required' });
 
-  const lockedMinutes = checkLockout(email);
+  const user = db.prepare('SELECT * FROM users WHERE (email = ? OR username = ?) AND active = 1').get(identifier, identifier);
+  const lockKey = user ? user.email : identifier;
+
+  const lockedMinutes = checkLockout(lockKey);
   if (lockedMinutes !== null) {
     return res.status(429).json({ error: `Too many failed attempts. Try again in ${lockedMinutes} minute(s), or contact support@nsa.com.na for help.` });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ? AND active = 1').get(email);
   const valid = user && verifyPassword(password, user.password_hash, user.password_salt);
 
   if (!valid) {
-    const remaining = recordFailedAttempt(email);
-    logActivity(email, 'login_failed', 'Invalid credentials');
+    const remaining = recordFailedAttempt(lockKey);
+    logActivity(user ? user.email : identifier, 'login_failed', 'Invalid credentials');
     const suffix = remaining !== null
       ? ` ${remaining} attempt(s) remaining before this account is temporarily locked.`
       : ' This account is now temporarily locked.';
-    return res.status(401).json({ error: `Invalid email or password.${suffix}` });
+    return res.status(401).json({ error: `Invalid username/email or password.${suffix}` });
   }
 
-  clearAttempts(email);
+  clearAttempts(lockKey);
   const token = crypto.randomBytes(24).toString('hex');
-  activeTokens.set(token, { email: user.email, role: user.role });
+  activeTokens.set(token, { email: user.email, role: user.role, lastActivity: Date.now() });
   logActivity(user.email, 'login', 'Successful login');
-  res.json({ token, email: user.email, full_name: `${user.first_name} ${user.last_name}`, role: user.role });
+  res.json({
+    token,
+    email: user.email,
+    username: user.username,
+    full_name: `${user.first_name} ${user.last_name}`,
+    role: user.role
+  });
 });
 
 app.post('/api/logout', requireAuth, (req, res) => {
@@ -104,19 +131,19 @@ app.post('/api/logout', requireAuth, (req, res) => {
 });
 
 app.post('/api/forgot-password', (req, res) => {
-  const { email } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+  const { identifier } = req.body || {};
+  if (!identifier) return res.status(400).json({ error: 'Username or email is required' });
 
-  const genericMessage = 'If that email exists in our system, a password reset link has been generated.';
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  const genericMessage = 'If that account exists in our system, a password reset link has been generated.';
+  const user = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(identifier, identifier);
   if (!user) {
     return res.json({ message: genericMessage });
   }
 
   const token = crypto.randomBytes(24).toString('hex');
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-  db.prepare('INSERT INTO password_resets (user_email, token, expires_at) VALUES (?, ?, ?)').run(email, token, expiresAt);
-  logActivity(email, 'password_reset_requested', 'Requested a password reset');
+  db.prepare('INSERT INTO password_resets (user_email, token, expires_at) VALUES (?, ?, ?)').run(user.email, token, expiresAt);
+  logActivity(user.email, 'password_reset_requested', 'Requested a password reset');
 
   res.json({
     message: genericMessage,
@@ -172,7 +199,7 @@ app.put('/api/settings', requireAuth, requireRole('admin'), (req, res) => {
 });
 
 // --- Users --- (admin only: account management, including viewing PII like phone numbers)
-const userSelect = 'SELECT id, first_name, last_name, email, phone, role, active, created_at FROM users';
+const userSelect = 'SELECT id, first_name, last_name, username, email, phone, role, active, created_at FROM users';
 
 app.get('/api/users', requireAuth, requireRole('admin'), (req, res) => {
   const users = db.prepare(`${userSelect} ORDER BY first_name`).all();
@@ -186,10 +213,11 @@ app.get('/api/users/:id', requireAuth, requireRole('admin'), (req, res) => {
 });
 
 app.post('/api/users', requireAuth, requireRole('admin'), (req, res) => {
-  const { first_name, last_name, email, phone, password, role, agreed_to_terms } = req.body || {};
-  if (!first_name || !last_name || !email || !password) {
-    return res.status(400).json({ error: 'First name, last name, email, and password are required' });
+  const { first_name, last_name, username, email, phone, password, role, agreed_to_terms } = req.body || {};
+  if (!first_name || !last_name || !username || !email || !password) {
+    return res.status(400).json({ error: 'First name, last name, username, email, and password are required' });
   }
+  if (!isValidUsername(username)) return res.status(400).json({ error: `Invalid username. ${USERNAME_RULE_TEXT}` });
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address' });
   if (!agreed_to_terms) return res.status(400).json({ error: 'The Terms of Use must be accepted to create an account' });
   if (!validatePasswordComplexity(password)) {
@@ -200,29 +228,34 @@ app.post('/api/users', requireAuth, requireRole('admin'), (req, res) => {
   const { hash, salt } = hashPassword(password);
   try {
     const result = db.prepare(`
-      INSERT INTO users (first_name, last_name, email, phone, password_hash, password_salt, role, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-    `).run(first_name, last_name, email, phone || '', hash, salt, finalRole);
-    logActivity(req.userEmail, 'user_created', `Created user ${email} with role "${finalRole}"`);
-    res.status(201).json({ id: Number(result.lastInsertRowid), first_name, last_name, email, phone, role: finalRole });
+      INSERT INTO users (first_name, last_name, username, email, phone, password_hash, password_salt, role, active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(first_name, last_name, username, email, phone || '', hash, salt, finalRole);
+    logActivity(req.userEmail, 'user_created', `Created user ${email} (${username}) with role "${finalRole}"`);
+    res.status(201).json({ id: Number(result.lastInsertRowid), first_name, last_name, username, email, phone, role: finalRole });
   } catch (err) {
-    res.status(400).json({ error: 'A user with that email already exists' });
+    res.status(400).json({ error: 'That username or email is already taken' });
   }
 });
 
 app.put('/api/users/:id', requireAuth, requireRole('admin'), (req, res) => {
-  const { first_name, last_name, email, phone, active, role } = req.body || {};
-  if (!first_name || !last_name || !email) return res.status(400).json({ error: 'First name, last name, and email are required' });
+  const { first_name, last_name, username, email, phone, active, role } = req.body || {};
+  if (!first_name || !last_name || !username || !email) return res.status(400).json({ error: 'First name, last name, username, and email are required' });
+  if (!isValidUsername(username)) return res.status(400).json({ error: `Invalid username. ${USERNAME_RULE_TEXT}` });
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address' });
 
   const activeFlag = (active === false || active === 0 || active === '0') ? 0 : 1;
   const finalRole = VALID_ROLES.includes(role) ? role : 'viewer';
-  const result = db.prepare(`
-    UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ?, active = ?, role = ? WHERE id = ?
-  `).run(first_name, last_name, email, phone || '', activeFlag, finalRole, req.params.id);
-  if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
-  logActivity(req.userEmail, 'user_updated', `Updated user ${email}`);
-  res.json({ id: Number(req.params.id), first_name, last_name, email, phone, active: activeFlag, role: finalRole });
+  try {
+    const result = db.prepare(`
+      UPDATE users SET first_name = ?, last_name = ?, username = ?, email = ?, phone = ?, active = ?, role = ? WHERE id = ?
+    `).run(first_name, last_name, username, email, phone || '', activeFlag, finalRole, req.params.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
+    logActivity(req.userEmail, 'user_updated', `Updated user ${email}`);
+    res.json({ id: Number(req.params.id), first_name, last_name, username, email, phone, active: activeFlag, role: finalRole });
+  } catch (err) {
+    res.status(400).json({ error: 'That username or email is already taken by another account' });
+  }
 });
 
 app.delete('/api/users/:id', requireAuth, requireRole('admin'), (req, res) => {

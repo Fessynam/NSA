@@ -21,13 +21,14 @@ async function loadUsers() {
   tbody.innerHTML = users.map(u => `
     <tr>
       <td>${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</td>
+      <td>${escapeHtml(u.username)}</td>
       <td>${escapeHtml(u.email)}</td>
       <td>${escapeHtml(u.phone || '—')}</td>
       <td><span class="role-badge role-${escapeHtml(u.role)}" style="color: var(--nsa-navy); background: var(--nsa-light-gray);">${roleLabel(u.role)}</span></td>
       <td>${u.active ? '<span class="badge">Active</span>' : '<span class="badge" style="color:var(--nsa-danger);">Inactive</span>'}</td>
       <td class="actions-cell">
         <button class="btn btn-outline btn-sm" onclick="editUser(${u.id})">Edit</button>
-        <button class="btn btn-outline btn-sm" onclick="resetUserPassword('${escapeHtml(u.email)}')">Reset Password</button>
+        <button class="btn btn-outline btn-sm" onclick="resetUserPassword('${escapeHtml(u.username)}')">Reset Password</button>
         <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>
       </td>
     </tr>
@@ -56,7 +57,28 @@ function closeFormModal() {
 }
 
 document.getElementById('add-user-btn').addEventListener('click', () => {
+  usernameAutoFilled = true;
   openFormModal('Add User', 'add');
+});
+
+// Auto-suggest a username from first/last name while adding a new user,
+// but stop overwriting once the admin starts editing it directly.
+let usernameAutoFilled = true;
+function suggestUsername() {
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const first = slug(document.getElementById('user-first-name').value);
+  const last = slug(document.getElementById('user-last-name').value);
+  return first && last ? `${first}.${last}` : '';
+}
+['user-first-name', 'user-last-name'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    if (document.getElementById('user-id').value) return; // don't auto-fill while editing
+    if (!usernameAutoFilled) return;
+    document.getElementById('user-username').value = suggestUsername();
+  });
+});
+document.getElementById('user-username').addEventListener('input', () => {
+  usernameAutoFilled = false;
 });
 
 document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
@@ -75,6 +97,7 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const payload = {
     first_name: document.getElementById('user-first-name').value.trim(),
     last_name: document.getElementById('user-last-name').value.trim(),
+    username: document.getElementById('user-username').value.trim(),
     email: document.getElementById('user-email').value.trim(),
     phone: document.getElementById('user-phone').value.trim(),
     role: document.getElementById('user-role').value
@@ -105,6 +128,7 @@ async function editUser(id) {
   document.getElementById('user-id').value = user.id;
   document.getElementById('user-first-name').value = user.first_name;
   document.getElementById('user-last-name').value = user.last_name;
+  document.getElementById('user-username').value = user.username;
   document.getElementById('user-email').value = user.email;
   document.getElementById('user-phone').value = user.phone || '';
   document.getElementById('user-role').value = user.role;
@@ -123,14 +147,14 @@ async function deleteUser(id) {
   }
 }
 
-async function resetUserPassword(email) {
-  const ok = await confirmAction(`Generate a password reset link for ${email}?`, 'Reset password?');
+async function resetUserPassword(username) {
+  const ok = await confirmAction(`Generate a password reset link for ${username}?`, 'Reset password?');
   if (!ok) return;
 
   const res = await fetch('/api/forgot-password', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ identifier: username })
   });
   const data = await res.json();
 

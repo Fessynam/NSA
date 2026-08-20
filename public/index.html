@@ -9,102 +9,130 @@
 </head>
 <body>
   <div class="login-shell">
-    <div class="floating-card fc-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Employee Records</span></div>
-    <div class="floating-card fc-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Departments</span></div>
-    <div class="floating-card fc-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Secure Access</span></div>
-    <div class="floating-card fc-4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Activity Logs</span></div>
+    <div class="login-brand-panel">
+      <div class="brand-logo" id="brand-logo-slot"></div>
+      <h1>Employee Management System</h1>
+      <p class="tagline">The system of record for Namibia Statistics Agency staff, departments, and access.</p>
 
-    <div class="login-card">
-      <div class="logo-badge" id="logo-slot"></div>
+      <ul class="brand-features">
+        <li>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <span>Role-based access control, enforced end to end</span>
+        </li>
+        <li>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+          <span>Centralized employee and department records</span>
+        </li>
+        <li>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          <span>Complete, timestamped audit trail</span>
+        </li>
+      </ul>
 
-      <!-- Login panel -->
-      <div id="panel-login">
-        <h1>Employee Management System</h1>
-        <p class="tagline">Secure Access Portal</p>
+      <div class="brand-footer">© 2026 Namibia Statistics Agency</div>
+    </div>
 
-        <div class="error-msg" id="error-msg"></div>
+    <div class="login-form-panel">
+      <div style="width:100%; max-width:400px;">
+        <div class="form-brand-row">
+          <img src="assets/nsa-logo.webp" alt="NSA logo" />
+          <span>
+            <div class="name">NSA Employee Management</div>
+            <div class="sub">Namibia Statistics Agency</div>
+          </span>
+        </div>
 
-        <form id="login-form">
-          <div class="field">
-            <label for="email">Email</label>
-            <div class="input-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
-              <input type="email" id="email" autocomplete="username" required />
+        <div class="login-card">
+          <!-- Login panel -->
+          <div id="panel-login">
+            <h1>Sign in</h1>
+            <p class="tagline">Enter your username or email to continue.</p>
+
+            <div class="error-msg" id="error-msg"></div>
+
+            <form id="login-form">
+              <div class="field">
+                <label for="identifier">Username or Email</label>
+                <div class="input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <input type="text" id="identifier" autocomplete="username" required />
+                </div>
+              </div>
+              <div class="field">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <input type="password" id="password" autocomplete="current-password" required />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
+            </form>
+
+            <div class="login-links">
+              <a href="#" id="forgot-link">Forgot password?</a>
+              <span>·</span>
+              <a href="#" id="terms-link">Terms of Use</a>
+            </div>
+
+            <div class="hint">
+              <div class="hint-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Demo credentials
+              </div>
+              <div class="hint-value"><code>festus.alpheus</code> <span>or</span> <code>festus@nsa.com.na</code></div>
+              <div class="hint-value"><code>NSA@2026</code></div>
+            </div>
+
+            <p class="support-line">Trouble logging in? Contact <a href="mailto:support@nsa.com.na">support@nsa.com.na</a></p>
+          </div>
+
+          <!-- Forgot password panel -->
+          <div id="panel-forgot" style="display:none;">
+            <h1>Reset your password</h1>
+            <p class="tagline">We'll help you get back in.</p>
+
+            <div class="error-msg" id="forgot-error"></div>
+            <div class="success-msg" id="forgot-success"></div>
+
+            <form id="forgot-form">
+              <div class="field">
+                <label for="forgot-identifier">Username or Email</label>
+                <input type="text" id="forgot-identifier" required />
+              </div>
+              <button type="submit" class="btn btn-primary" id="forgot-btn">Send reset link</button>
+            </form>
+
+            <div id="dev-reset-box" style="display:none;"></div>
+
+            <div class="login-links">
+              <a href="#" id="back-to-login-1">Back to sign in</a>
             </div>
           </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <div class="input-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <input type="password" id="password" autocomplete="current-password" required />
+
+          <!-- Reset password panel -->
+          <div id="panel-reset" style="display:none;">
+            <h1>Set a new password</h1>
+            <p class="tagline">Choose something you haven't used before.</p>
+
+            <div class="error-msg" id="reset-error"></div>
+
+            <form id="reset-form">
+              <div class="field">
+                <label for="new-password">New password</label>
+                <input type="password" id="new-password" required />
+              </div>
+              <div class="field">
+                <label for="confirm-password">Confirm password</label>
+                <input type="password" id="confirm-password" required />
+              </div>
+              <p class="password-rule">At least 8 characters, combining at least 3 of: uppercase, lowercase, numbers, symbols.</p>
+              <button type="submit" class="btn btn-primary" id="reset-btn">Update password</button>
+            </form>
+
+            <div class="login-links">
+              <a href="#" id="back-to-login-2">Back to sign in</a>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" id="login-btn">Log in</button>
-        </form>
-
-        <div class="login-links">
-          <a href="#" id="forgot-link">Forgot password?</a>
-          <span>·</span>
-          <a href="#" id="terms-link">Terms of Use</a>
-        </div>
-
-        <div class="hint">
-          <div class="hint-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Demo credentials
-          </div>
-          <div class="hint-value"><code>festus@nsa.com.na</code></div>
-          <div class="hint-value"><code>NSA@2026</code></div>
-        </div>
-
-        <p class="support-line">Trouble logging in? Contact <a href="mailto:support@nsa.com.na">support@nsa.com.na</a></p>
-      </div>
-
-      <!-- Forgot password panel -->
-      <div id="panel-forgot" style="display:none;">
-        <h1>Reset your password</h1>
-        <p class="tagline">We'll help you get back in</p>
-
-        <div class="error-msg" id="forgot-error"></div>
-        <div class="success-msg" id="forgot-success"></div>
-
-        <form id="forgot-form">
-          <div class="field">
-            <label for="forgot-email">Email</label>
-            <input type="email" id="forgot-email" required />
-          </div>
-          <button type="submit" class="btn btn-primary" id="forgot-btn">Send reset link</button>
-        </form>
-
-        <div id="dev-reset-box" style="display:none;"></div>
-
-        <div class="login-links">
-          <a href="#" id="back-to-login-1">Back to login</a>
-        </div>
-      </div>
-
-      <!-- Reset password panel -->
-      <div id="panel-reset" style="display:none;">
-        <h1>Set a new password</h1>
-        <p class="tagline">Choose something you haven't used before</p>
-
-        <div class="error-msg" id="reset-error"></div>
-
-        <form id="reset-form">
-          <div class="field">
-            <label for="new-password">New password</label>
-            <input type="password" id="new-password" required />
-          </div>
-          <div class="field">
-            <label for="confirm-password">Confirm password</label>
-            <input type="password" id="confirm-password" required />
-          </div>
-          <p class="password-rule">At least 8 characters, combining at least 3 of: uppercase, lowercase, numbers, symbols.</p>
-          <button type="submit" class="btn btn-primary" id="reset-btn">Update password</button>
-        </form>
-
-        <div class="login-links">
-          <a href="#" id="back-to-login-2">Back to login</a>
         </div>
       </div>
     </div>
@@ -132,7 +160,7 @@
 
   <script src="js/common.js"></script>
   <script>
-    document.getElementById('logo-slot').innerHTML = LOGO_IMG;
+    document.getElementById('brand-logo-slot').innerHTML = LOGO_IMG;
 
     function showPanel(name) {
       document.getElementById('panel-login').style.display = name === 'login' ? '' : 'none';
@@ -149,6 +177,14 @@
 
     if (resetToken) {
       showPanel('reset');
+    }
+
+    const sessionMessage = sessionStorage.getItem('ems_session_message');
+    if (sessionMessage) {
+      sessionStorage.removeItem('ems_session_message');
+      const errorEl = document.getElementById('error-msg');
+      errorEl.textContent = sessionMessage;
+      errorEl.style.display = 'block';
     }
 
     document.getElementById('forgot-link').addEventListener('click', (e) => {
@@ -172,7 +208,7 @@
     // --- Login ---
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value.trim();
+      const identifier = document.getElementById('identifier').value.trim();
       const password = document.getElementById('password').value;
       const errorEl = document.getElementById('error-msg');
       const btn = document.getElementById('login-btn');
@@ -184,13 +220,14 @@
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ identifier, password })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
 
         localStorage.setItem('ems_token', data.token);
         localStorage.setItem('ems_email', data.email);
+        localStorage.setItem('ems_username', data.username);
         localStorage.setItem('ems_full_name', data.full_name);
         localStorage.setItem('ems_role', data.role);
         window.location.href = 'dashboard.html';
@@ -198,14 +235,14 @@
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Log in';
+        btn.textContent = 'Sign in';
       }
     });
 
     // --- Forgot password ---
     document.getElementById('forgot-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('forgot-email').value.trim();
+      const identifier = document.getElementById('forgot-identifier').value.trim();
       const errorEl = document.getElementById('forgot-error');
       const successEl = document.getElementById('forgot-success');
       const devBox = document.getElementById('dev-reset-box');
@@ -220,7 +257,7 @@
         const res = await fetch('/api/forgot-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ identifier })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Something went wrong');

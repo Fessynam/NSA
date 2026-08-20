@@ -237,6 +237,12 @@ a { color: inherit; }
 }
 [data-theme="dark"] .page-header h1 { color: var(--nsa-white); }
 
+.page-subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: #8b93a1;
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;
@@ -341,83 +347,129 @@ th.sortable[data-dir="desc"]::after { content: "↓"; opacity: 1; color: var(--n
   color: var(--nsa-text);
 }
 
-/* --- Login page --- */
+/* --- Login page: split-screen (brand panel + form panel), enterprise style --- */
 .login-shell {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(169,130,46,0.22) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(255,255,255,0.06) 0%, transparent 40%),
-    linear-gradient(160deg, var(--nsa-navy) 0%, var(--nsa-navy-dark) 100%);
-  padding: 1rem;
 }
 
-.login-shell::before {
+.login-brand-panel {
+  flex: 0 0 44%;
+  max-width: 580px;
+  min-width: 380px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--nsa-navy) 0%, var(--nsa-navy-dark) 100%);
+  color: var(--nsa-white);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 3.5rem;
+  border-top: 3px solid var(--nsa-gold);
+}
+
+.login-brand-panel::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 70%);
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
   pointer-events: none;
 }
 
-.login-shell::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--nsa-gold), transparent 60%, var(--nsa-gold));
-  opacity: 0.8;
+.login-brand-panel > * { position: relative; z-index: 1; }
+
+.brand-logo { width: 50px; height: 50px; margin-bottom: 2.5rem; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+.login-brand-panel h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 0.85rem;
+  letter-spacing: -0.01em;
 }
+
+.login-brand-panel .tagline {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0.68;
+  margin: 0 0 3rem;
+  max-width: 34ch;
+}
+
+.brand-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.15rem; }
+.brand-features li { display: flex; align-items: flex-start; gap: 0.9rem; font-size: 0.87rem; line-height: 1.4; opacity: 0.9; }
+
+.brand-features .feature-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-features .feature-icon svg { width: 16px; height: 16px; }
+
+.brand-footer {
+  margin-top: 3.5rem;
+  font-size: 0.72rem;
+  opacity: 0.45;
+}
+
+@media (max-width: 900px) {
+  .login-brand-panel { display: none; }
+}
+
+.login-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nsa-light-gray);
+  padding: 2rem 1.25rem;
+}
+
+.form-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+.form-brand-row img { width: 32px; height: 32px; object-fit: contain; }
+.form-brand-row .name { font-size: 0.85rem; font-weight: 700; color: var(--nsa-navy); line-height: 1.2; }
+.form-brand-row .sub { font-size: 0.68rem; color: #8b93a1; }
 
 .login-card {
   position: relative;
   background: var(--nsa-white);
-  border-radius: 14px;
-  padding: 2.5rem 2.25rem 2.25rem;
+  border: 1px solid var(--nsa-gray-border);
+  border-left: 3px solid var(--nsa-gold);
+  border-radius: 10px;
+  padding: 2.25rem 2.25rem 2rem;
   width: 100%;
-  max-width: 380px;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
-  text-align: center;
-  animation: login-rise 0.5s ease-out;
+  max-width: 400px;
+  box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 8px 24px rgba(16,24,40,0.06);
+  animation: login-fade 0.25s ease-out;
 }
 
-.login-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 14px; right: 14px;
-  height: 3px;
-  border-radius: 0 0 4px 4px;
-  background: var(--nsa-gold);
+@keyframes login-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes login-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.logo-badge {
-  position: relative;
-  box-shadow: 0 0 0 6px rgba(0,38,100,0.06), 0 10px 24px rgba(0,38,100,0.35);
-}
-
-.login-card h1 { color: var(--nsa-navy); font-size: 1.2rem; margin: 0 0 0.2rem; letter-spacing: 0.01em; }
+.login-card h1 { color: var(--nsa-navy); font-size: 1.25rem; margin: 0 0 0.25rem; letter-spacing: -0.01em; }
 [data-theme="dark"] .login-card h1 { color: var(--nsa-navy); }
 
 .login-card p.tagline {
   color: #6b7280;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   margin: 0 0 1.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
 }
 
 .field { text-align: left; margin-bottom: 1.1rem; position: relative; }
@@ -704,6 +756,32 @@ th.sortable[data-dir="desc"]::after { content: "↓"; opacity: 1; color: var(--n
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
+}
+
+.dashboard-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.activity-feed-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--nsa-gray-border);
+  font-size: 0.85rem;
+}
+.activity-feed-item:last-child { border-bottom: none; }
+
+.activity-feed-time {
+  color: #8b93a1;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .stat-card {

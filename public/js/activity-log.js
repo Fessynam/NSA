@@ -4,12 +4,6 @@ renderSidebar('activity-log');
 
 let lastLoadedLogs = [];
 
-function formatTimestamp(isoLike) {
-  const d = new Date(isoLike.replace(' ', 'T') + 'Z');
-  if (isNaN(d.getTime())) return isoLike;
-  return d.toLocaleString();
-}
-
 function actionBadgeStyle(action) {
   if (action.includes('failed') || action.includes('deleted')) return 'color: var(--nsa-danger); border-color: var(--nsa-danger);';
   if (action.includes('created') || action === 'login' || action === 'password_reset') return 'color: var(--nsa-gold); border-color: var(--nsa-gold);';

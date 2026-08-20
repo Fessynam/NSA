@@ -24,6 +24,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     phone TEXT,
     password_hash TEXT NOT NULL,
@@ -92,9 +93,9 @@ function seedIfEmpty() {
   if (userCount === 0) {
     const { hash, salt } = hashPassword('NSA@2026');
     db.prepare(`
-      INSERT INTO users (first_name, last_name, email, phone, password_hash, password_salt, role, active)
-      VALUES (?, ?, ?, ?, ?, ?, 'admin', 1)
-    `).run('Festus', 'Alpheus', 'festus@nsa.com.na', '+264 81 000 0000', hash, salt);
+      INSERT INTO users (first_name, last_name, username, email, phone, password_hash, password_salt, role, active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', 1)
+    `).run('Festus', 'Alpheus', 'festus.alpheus', 'festus@nsa.com.na', '+264 81 000 0000', hash, salt);
   }
 
   const settingsCount = db.prepare('SELECT COUNT(*) AS c FROM settings').get().c;
