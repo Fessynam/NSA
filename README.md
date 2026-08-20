@@ -12,13 +12,17 @@ An Employee Management System built for Section B (Practical) of the assessment:
 |---|---|
 | ![Employees list](docs/screenshots/03-employees.png) | ![Employee detail modal](docs/screenshots/04-employee-detail.png) |
 
-| Departments | Settings (Users + System Config) |
+| Departments | Department detail |
 |---|---|
-| ![Departments list](docs/screenshots/05-departments.png) | ![Settings page](docs/screenshots/06-settings.png) |
+| ![Departments list](docs/screenshots/05-departments.png) | ![Department detail modal](docs/screenshots/05b-department-detail.png) |
 
-| Activity Log | Dark mode |
+| Settings (Users + System Config) | Activity Log |
 |---|---|
-| ![Activity log](docs/screenshots/07-activity-log.png) | ![Dashboard in dark mode](docs/screenshots/08-dashboard-dark.png) |
+| ![Settings page](docs/screenshots/06-settings.png) | ![Activity log](docs/screenshots/07-activity-log.png) |
+
+| Dark mode |
+|---|
+| ![Dashboard in dark mode](docs/screenshots/08-dashboard-dark.png) |
 
 | Mobile / responsive |
 |---|
@@ -68,9 +72,11 @@ Login accepts **either** the username or the email — whichever is typed, as lo
    - **View** opens a read-only detail card including the linked department. **Edit** reopens the same form pre-filled. **Delete** asks for confirmation, then removes the record. *(Edit/Delete: Admin/Support only.)*
    - **Export CSV** downloads the currently-filtered list as a `.csv` file.
 4. **Departments** (left sidebar):
-   - **+ Add Department** opens a modal for name and description. *(Admin/Support only.)*
-   - **View** shows the department's description and the full list of employees assigned to it.
+   - **+ Add Department** opens a modal for name, a short unique **code** (e.g. `ENG`, `FIN`), a description, and an optional **department head** (any employee). *(Admin/Support only.)*
+   - **View** shows the department's code, description, head, and the full list of employees assigned to it.
    - **Delete** asks for confirmation and explains that linked employees are unassigned, not deleted, when a department is removed. *(Admin/Support only.)*
+   - **Export CSV** downloads the department list (code, name, description, head, employee count).
+   - Deleting an employee who is set as a department head automatically clears that department's head (rather than leaving a dangling reference) — covered by the browser-driven regression tests.
 5. **Activity Log** (Admin/Support only) — a timestamped audit trail of every login, logout, failed login, and create/update/delete across employees, departments, and users. Filterable by a live search box.
 6. **Settings** (Admin only):
    - **User Accounts** — add, edit, or remove login accounts, each with a first name, surname, email, phone number, and a role (Admin / Support / Viewer). New accounts require accepting the Terms of Use and a password meeting the complexity policy. **Reset Password** generates a fresh reset link for that user (same dev-mode display as the login page's forgot-password flow).
@@ -109,6 +115,7 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 - **Passwords are salted and hashed** with Node's built-in `crypto.scryptSync` (no plaintext storage, no external bcrypt dependency), and must satisfy a policy of at least 8 characters combining 3 of 4 character classes (upper/lower/digit/symbol) — the same standard Azure AD and most enterprise policies use. This was tuned specifically so the seeded password `NSA@2026` (which has no lowercase letter) still passes, rather than special-casing the seed account around a stricter rule.
 - **Forgot password has no real email service behind it.** Rather than fake a "check your inbox" message that goes nowhere, the reset link is generated as a real, single-use, 30-minute-expiry token and displayed directly on screen, clearly labeled as dev-mode. The underlying flow (token generation, expiry, one-time use) is fully real; only the delivery channel is simulated.
 - **Login lockout** is 5 failed attempts → 15-minute lock, tracked in memory (fine for a single-instance demo; would move to a shared store like Redis in a multi-instance deployment).
+- **IP-based rate limiting** on `/api/login` (20 requests / 5 min) and `/api/forgot-password` (10 requests / 5 min) sits alongside the per-account lockout — the lockout alone doesn't stop someone spraying login attempts across *many different* accounts from one source; the rate limit does.
 - **Sessions expire after 20 minutes of inactivity** (a sliding window — any authenticated request extends it), enforced server-side in `requireAuth` and mirrored client-side by an idle-activity timer, so an unattended browser tab can't stay logged in indefinitely.
 - Login uses a bearer-token session (kept in `localStorage`), sufficient for a single-instance demo app, not a production auth scheme (no refresh tokens, no CSRF protections needed since there are no cookies).
 - The login screen is a split-screen layout (branded static panel + form), deliberately without decorative animation — a bouncing/floating background reads as a demo toy rather than the enterprise system this is meant to look like.
@@ -132,8 +139,11 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 - **System-wide activity log** — every login, logout, failed login, and CRUD action is recorded with who/what/when.
 - **User management** — admin-managed accounts with first name, surname, email, phone, and role.
 - **Idle-session timeout** — 20-minute sliding-window auto logout, enforced server-side and mirrored client-side, with a clear on-screen explanation rather than a silent failure.
+- **IP-based rate limiting** on the login and forgot-password endpoints, independent of the per-account lockout (see Assumptions).
+- **`/api/health` endpoint** — status, uptime, and timestamp, the standard shape a load balancer or uptime monitor expects.
+- **Department code + department head** — short unique codes (`ENG`, `FIN`, …) and an assignable head from the employee list; deleting that employee automatically clears the headship rather than leaving a dangling reference.
 - **Dashboard activity widgets** (Admin/Support) — live date/time, a 7-day login-activity chart, a Recent Activity feed, and a "Logins Today" stat, all reusing the audit log.
-- **CSV export** for the Employees table (respects the current search filter).
+- **CSV export** for both the Employees and Departments tables (Employees respects the current search filter).
 - **Sortable employee table** — click any column header to sort, click again to reverse.
 - **Department detail view** — see every employee assigned to a department, not just the count.
 - **Custom confirm dialogs and toast notifications** in place of the browser's native `confirm()`/`alert()`, matching the app's own design language.
@@ -147,7 +157,7 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 |---|---|---|
 | Functional Login | 10 | Hashed-password check, lockout, forgot/reset password, token session, redirect to dashboard |
 | Employee CRUD | 25 | List/add/edit/delete + sort + search + detail view showing linked department |
-| Department CRUD | 20 | List/add/edit/delete + detail view of assigned employees, FK-linked to employees |
+| Department CRUD | 20 | List/add/edit/delete + code + head + detail view of assigned employees, FK-linked to employees |
 | Database & Relationships | 10 | SQLite, `employees.department_id` FK → `departments.id`, `ON DELETE SET NULL` |
 | Design/Usability | 5 | NSA navy/gold palette, responsive sidebar layout, logo in sidebar + login |
 | Bonus | up to 10 | REST API, search/filter, theme toggle, unit tests |
@@ -155,10 +165,12 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 ## Project Structure
 
 ```
-server.js                 Express app + REST API routes, role middleware, activity logging
-db.js                      SQLite schema + seed data
+server.js                 Express app + REST API routes, role middleware, activity logging,
+                           rate limiting, health check
+db.js                      SQLite schema + seed data (departments now include code + head)
 lib/auth.js                Password hashing (scrypt), complexity policy, username/email validation
 lib/session.js             Idle-session-expiry logic (pure function, unit tested)
+lib/rateLimit.js           Sliding-window rate-limit logic (pure function, unit tested)
 public/
   index.html               Login — split-screen enterprise layout, username-or-email,
                             forgot/reset password, Terms of Use
@@ -178,4 +190,5 @@ docs/screenshots/          Screenshots used in this README
 test/employees.test.js     Unit tests — employee CRUD, department FK behavior
 test/auth.test.js          Unit tests — password hashing, complexity policy, email validation
 test/session.test.js       Unit tests — idle-session-expiry logic
+test/rateLimit.test.js     Unit tests — sliding-window rate-limit logic
 ```

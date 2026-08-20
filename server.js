@@ -7,6 +7,7 @@ const {
   isValidUsername, USERNAME_RULE_TEXT
 } = require('./lib/auth');
 const { SESSION_IDLE_MS, isSessionExpired } = require('./lib/session');
+const { checkRateLimit } = require('./lib/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -84,10 +85,30 @@ function requireRole(...roles) {
   };
 }
 
+// IP-based rate limiting on the unauthenticated auth endpoints — a per-account lockout alone
+// doesn't stop an attacker from spraying many different accounts from one source.
+const rateLimitBuckets = new Map(); // "route:ip" -> timestamps[]
+
+function rateLimit(routeKey, maxRequests, windowMs) {
+  return (req, res, next) => {
+    const bucketKey = `${routeKey}:${req.ip}`;
+    const { allowed, timestamps } = checkRateLimit(rateLimitBuckets.get(bucketKey) || [], Date.now(), maxRequests, windowMs);
+    rateLimitBuckets.set(bucketKey, timestamps);
+    if (!allowed) {
+      return res.status(429).json({ error: 'Too many requests from this location. Please try again in a few minutes.' });
+    }
+    next();
+  };
+}
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime_seconds: Math.round(process.uptime()), timestamp: new Date().toISOString() });
+});
+
 // --- Auth ---
 // "identifier" accepts either the account's username or its email — whichever the user types,
 // as long as the password matches.
-app.post('/api/login', (req, res) => {
+app.post('/api/login', rateLimit('login', 20, 5 * 60 * 1000), (req, res) => {
   const { identifier, password } = req.body || {};
   if (!identifier || !password) return res.status(400).json({ error: 'Username or email, and password, are required' });
 
@@ -130,7 +151,7 @@ app.post('/api/logout', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/forgot-password', (req, res) => {
+app.post('/api/forgot-password', rateLimit('forgot-password', 10, 5 * 60 * 1000), (req, res) => {
   const { identifier } = req.body || {};
   if (!identifier) return res.status(400).json({ error: 'Username or email is required' });
 
@@ -272,37 +293,67 @@ app.delete('/api/users/:id', requireAuth, requireRole('admin'), (req, res) => {
 });
 
 // --- Departments ---
+const departmentSelect = `
+  SELECT departments.id, departments.name, departments.code, departments.description,
+         departments.head_employee_id, employees.name AS head_name
+  FROM departments
+  LEFT JOIN employees ON employees.id = departments.head_employee_id
+`;
+const DEPT_CODE_PATTERN = /^[A-Z0-9]{2,6}$/;
+
 app.get('/api/departments', requireAuth, (req, res) => {
-  const departments = db.prepare('SELECT * FROM departments ORDER BY name').all();
+  const departments = db.prepare(`${departmentSelect} ORDER BY departments.name`).all();
   res.json(departments);
 });
 
 app.get('/api/departments/:id', requireAuth, (req, res) => {
-  const dept = db.prepare('SELECT * FROM departments WHERE id = ?').get(req.params.id);
+  const dept = db.prepare(`${departmentSelect} WHERE departments.id = ?`).get(req.params.id);
   if (!dept) return res.status(404).json({ error: 'Department not found' });
   const employees = db.prepare('SELECT id, name, email, position FROM employees WHERE department_id = ?').all(req.params.id);
   res.json({ ...dept, employees });
 });
 
 app.post('/api/departments', requireAuth, requireRole('admin', 'support'), (req, res) => {
-  const { name, description } = req.body || {};
+  const { name, code, description, head_employee_id } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Department name is required' });
+  const finalCode = code ? String(code).trim().toUpperCase() : null;
+  if (finalCode && !DEPT_CODE_PATTERN.test(finalCode)) {
+    return res.status(400).json({ error: 'Department code must be 2-6 letters/numbers (e.g. ENG, FIN)' });
+  }
+  const headId = head_employee_id || null;
+  if (headId && !db.prepare('SELECT id FROM employees WHERE id = ?').get(headId)) {
+    return res.status(400).json({ error: 'Selected department head does not exist' });
+  }
   try {
-    const result = db.prepare('INSERT INTO departments (name, description) VALUES (?, ?)').run(name, description || '');
+    const result = db.prepare('INSERT INTO departments (name, code, description, head_employee_id) VALUES (?, ?, ?, ?)')
+      .run(name, finalCode, description || '', headId);
     logActivity(req.userEmail, 'department_created', `Created department "${name}"`);
-    res.status(201).json({ id: Number(result.lastInsertRowid), name, description });
+    res.status(201).json({ id: Number(result.lastInsertRowid), name, code: finalCode, description, head_employee_id: headId });
   } catch (err) {
-    res.status(400).json({ error: 'Department name must be unique' });
+    res.status(400).json({ error: 'Department name or code must be unique' });
   }
 });
 
 app.put('/api/departments/:id', requireAuth, requireRole('admin', 'support'), (req, res) => {
-  const { name, description } = req.body || {};
+  const { name, code, description, head_employee_id } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Department name is required' });
-  const result = db.prepare('UPDATE departments SET name = ?, description = ? WHERE id = ?').run(name, description || '', req.params.id);
-  if (result.changes === 0) return res.status(404).json({ error: 'Department not found' });
-  logActivity(req.userEmail, 'department_updated', `Updated department "${name}"`);
-  res.json({ id: Number(req.params.id), name, description });
+  const finalCode = code ? String(code).trim().toUpperCase() : null;
+  if (finalCode && !DEPT_CODE_PATTERN.test(finalCode)) {
+    return res.status(400).json({ error: 'Department code must be 2-6 letters/numbers (e.g. ENG, FIN)' });
+  }
+  const headId = head_employee_id || null;
+  if (headId && !db.prepare('SELECT id FROM employees WHERE id = ?').get(headId)) {
+    return res.status(400).json({ error: 'Selected department head does not exist' });
+  }
+  try {
+    const result = db.prepare('UPDATE departments SET name = ?, code = ?, description = ?, head_employee_id = ? WHERE id = ?')
+      .run(name, finalCode, description || '', headId, req.params.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'Department not found' });
+    logActivity(req.userEmail, 'department_updated', `Updated department "${name}"`);
+    res.json({ id: Number(req.params.id), name, code: finalCode, description, head_employee_id: headId });
+  } catch (err) {
+    res.status(400).json({ error: 'Department name or code must be unique' });
+  }
 });
 
 app.delete('/api/departments/:id', requireAuth, requireRole('admin', 'support'), (req, res) => {
@@ -367,6 +418,7 @@ app.put('/api/employees/:id', requireAuth, requireRole('admin', 'support'), (req
 app.delete('/api/employees/:id', requireAuth, requireRole('admin', 'support'), (req, res) => {
   const emp = db.prepare('SELECT name FROM employees WHERE id = ?').get(req.params.id);
   if (!emp) return res.status(404).json({ error: 'Employee not found' });
+  db.prepare('UPDATE departments SET head_employee_id = NULL WHERE head_employee_id = ?').run(req.params.id);
   db.prepare('DELETE FROM employees WHERE id = ?').run(req.params.id);
   logActivity(req.userEmail, 'employee_deleted', `Deleted employee "${emp.name}"`);
   res.json({ ok: true });

@@ -8,7 +8,10 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    description TEXT
+    code TEXT UNIQUE,
+    description TEXT,
+    head_employee_id INTEGER,
+    FOREIGN KEY (head_employee_id) REFERENCES employees(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS employees (
@@ -62,16 +65,16 @@ function seedIfEmpty() {
 
   if (deptCount === 0) {
     const departments = [
-      ['Engineering', 'Builds and maintains internal software systems'],
-      ['Human Resources', 'Handles hiring, benefits, and employee relations'],
-      ['Finance', 'Manages budgeting, payroll, and financial reporting'],
-      ['Marketing', 'Runs campaigns and manages public communications'],
-      ['IT Security', 'Oversees information security and compliance'],
-      ['Operations', 'Coordinates day-to-day business operations']
+      ['Engineering', 'ENG', 'Builds and maintains internal software systems'],
+      ['Human Resources', 'HR', 'Handles hiring, benefits, and employee relations'],
+      ['Finance', 'FIN', 'Manages budgeting, payroll, and financial reporting'],
+      ['Marketing', 'MKT', 'Runs campaigns and manages public communications'],
+      ['IT Security', 'ITS', 'Oversees information security and compliance'],
+      ['Operations', 'OPS', 'Coordinates day-to-day business operations']
     ];
-    const insertDept = db.prepare('INSERT INTO departments (name, description) VALUES (?, ?)');
-    for (const [name, description] of departments) {
-      insertDept.run(name, description);
+    const insertDept = db.prepare('INSERT INTO departments (name, code, description) VALUES (?, ?, ?)');
+    for (const [name, code, description] of departments) {
+      insertDept.run(name, code, description);
     }
 
     const employees = [
@@ -86,6 +89,19 @@ function seedIfEmpty() {
     const insertEmp = db.prepare('INSERT INTO employees (name, email, position, department_id) VALUES (?, ?, ?, ?)');
     for (const [name, email, position, department_id] of employees) {
       insertEmp.run(name, email, position, department_id);
+    }
+
+    const headAssignments = [
+      ['ENG', 'grace.lin@example.com'],
+      ['HR', 'brian.chen@example.com'],
+      ['FIN', 'carla.diaz@example.com'],
+      ['MKT', 'david.okafor@example.com'],
+      ['ITS', 'elena.petrova@example.com'],
+      ['OPS', 'frank.osei@example.com']
+    ];
+    const setHead = db.prepare('UPDATE departments SET head_employee_id = (SELECT id FROM employees WHERE email = ?) WHERE code = ?');
+    for (const [code, email] of headAssignments) {
+      setHead.run(email, code);
     }
   }
 

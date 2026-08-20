@@ -6,6 +6,16 @@ if (!canEditDepartments) {
   document.getElementById('add-department-btn').style.display = 'none';
 }
 
+let employeesCache = [];
+let lastLoadedDepartments = [];
+
+async function loadEmployeesForHeadSelect() {
+  employeesCache = await apiFetch('/employees');
+  const select = document.getElementById('dept-head');
+  select.innerHTML = '<option value="">— None —</option>' +
+    employeesCache.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+}
+
 async function loadDepartments() {
   const [departments, employees] = await Promise.all([
     apiFetch('/departments'),
@@ -17,6 +27,8 @@ async function loadDepartments() {
     if (e.department_id) countByDept[e.department_id] = (countByDept[e.department_id] || 0) + 1;
   });
 
+  lastLoadedDepartments = departments.map(d => ({ ...d, employee_count: countByDept[d.id] || 0 }));
+
   const tbody = document.getElementById('departments-tbody');
   const emptyState = document.getElementById('empty-state');
 
@@ -27,11 +39,13 @@ async function loadDepartments() {
   }
   emptyState.style.display = 'none';
 
-  tbody.innerHTML = departments.map(dept => `
+  tbody.innerHTML = lastLoadedDepartments.map(dept => `
     <tr>
+      <td>${dept.code ? `<span class="badge">${escapeHtml(dept.code)}</span>` : '—'}</td>
       <td>${escapeHtml(dept.name)}</td>
       <td>${escapeHtml(dept.description || '—')}</td>
-      <td><span class="badge">${countByDept[dept.id] || 0}</span></td>
+      <td>${dept.head_name ? escapeHtml(dept.head_name) : '<span class="text-muted">Unassigned</span>'}</td>
+      <td><span class="badge">${dept.employee_count}</span></td>
       <td class="actions-cell">
         <button class="btn btn-outline btn-sm" onclick="viewDepartment(${dept.id})">View</button>
         ${canEditDepartments ? `
@@ -61,12 +75,29 @@ document.getElementById('add-department-btn').addEventListener('click', () => {
 
 document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
 
+document.getElementById('export-csv-btn').addEventListener('click', () => {
+  if (lastLoadedDepartments.length === 0) {
+    showToast('No departments to export', 'danger');
+    return;
+  }
+  exportToCsv('departments.csv', lastLoadedDepartments, [
+    { key: 'code', label: 'Code' },
+    { key: 'name', label: 'Name' },
+    { key: 'description', label: 'Description' },
+    { key: 'head_name', label: 'Head' },
+    { key: 'employee_count', label: 'Employees' }
+  ]);
+  showToast('Departments exported to CSV');
+});
+
 document.getElementById('department-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('department-id').value;
   const payload = {
     name: document.getElementById('dept-name').value.trim(),
-    description: document.getElementById('dept-description').value.trim()
+    code: document.getElementById('dept-code').value.trim(),
+    description: document.getElementById('dept-description').value.trim(),
+    head_employee_id: document.getElementById('dept-head').value || null
   };
 
   const errorEl = document.getElementById('form-error');
@@ -96,7 +127,9 @@ async function viewDepartment(id) {
 
   document.getElementById('detail-content').innerHTML = `
     <p><strong>Name:</strong> ${escapeHtml(dept.name)}</p>
+    <p><strong>Code:</strong> ${dept.code ? escapeHtml(dept.code) : '—'}</p>
     <p><strong>Description:</strong> ${escapeHtml(dept.description || '—')}</p>
+    <p><strong>Head:</strong> ${dept.head_name ? escapeHtml(dept.head_name) : 'Unassigned'}</p>
     <p><strong>Employees (${dept.employees.length}):</strong></p>
     ${employeeList}
   `;
@@ -112,7 +145,9 @@ async function editDepartment(id) {
   openFormModal('Edit Department');
   document.getElementById('department-id').value = dept.id;
   document.getElementById('dept-name').value = dept.name;
+  document.getElementById('dept-code').value = dept.code || '';
   document.getElementById('dept-description').value = dept.description || '';
+  document.getElementById('dept-head').value = dept.head_employee_id || '';
 }
 
 async function deleteDepartment(id) {
@@ -123,4 +158,7 @@ async function deleteDepartment(id) {
   loadDepartments();
 }
 
-loadDepartments();
+(async () => {
+  await loadEmployeesForHeadSelect();
+  await loadDepartments();
+})();
