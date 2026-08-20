@@ -64,6 +64,7 @@ Login accepts **either** the username or the email — whichever is typed, as lo
    - Five failed attempts on one account triggers a 15-minute lockout, with a support-email pointer shown in the error message.
    - **Terms of Use** is available from the login footer at any time.
    - Sessions **auto-expire after 20 minutes of inactivity** (both server-enforced and detected client-side), returning you to login with a clear explanation rather than a silent failure.
+   - Click the eye icon in any password field to reveal what you've typed.
 2. **Dashboard** shows total employee/department counts, a live date/time, and a bar-chart breakdown of employees per department. Admin and Support additionally see a **7-day login activity chart**, a **Recent Activity** feed, and a "Logins Today" stat card — all pulled from the same audit log as the Activity Log page.
 3. **Employees** (left sidebar):
    - **+ Add Employee** opens a modal for name, email, position, and department. *(Admin/Support only.)*
@@ -109,7 +110,8 @@ A Viewer who calls a write endpoint directly (bypassing the UI entirely) gets a 
 
 ## Assumptions Made
 
-- "NSA" is the Namibia Statistics Agency, confirmed from the logo supplied (`NSA logo/white_nsa.webp`) and its real navy + gold brand colors. That logo is used directly in the sidebar and login screen; on the white login card it sits inside a navy badge so the white/transparent mark stays visible.
+- "NSA" is the Namibia Statistics Agency, confirmed from the two logo files supplied and their real navy (`#1f3a89`) + gold (`#ad9237`) brand colors — nearly identical to the palette already chosen by eye before the official asset arrived. Two variants are used deliberately: the white/transparent mark (`assets/nsa-logo.webp`) on navy surfaces (sidebar, login's branded panel), and the full-color mark (`assets/nsa-logo-color.svg`) everywhere the background is light (the login form panel, every page's favicon) — a white logo on a light background is barely visible, which is exactly the kind of mismatch this split avoids.
+- **Password fields have a show/hide toggle** everywhere in the app — applied automatically to every `input[type="password"]` by a single `common.js` helper, so any new password field gets it for free rather than needing to be wired up per page.
 - The brand's actual accent color is **gold**, not red — red is reserved exclusively for destructive/warning actions (Delete buttons, error messages, lockout notices) so it reads as a semantic signal rather than a decorative color.
 - **"Add users to the system" was built as admin-managed accounts, not public self-registration** — this is an internal tool, so an open sign-up page would be a security hole rather than a feature. Only an Admin can create accounts, from Settings.
 - **Passwords are salted and hashed** with Node's built-in `crypto.scryptSync` (no plaintext storage, no external bcrypt dependency), and must satisfy a policy of at least 8 characters combining 3 of 4 character classes (upper/lower/digit/symbol) — the same standard Azure AD and most enterprise policies use. This was tuned specifically so the seeded password `NSA@2026` (which has no lowercase letter) still passes, rather than special-casing the seed account around a stricter rule.
@@ -185,7 +187,8 @@ public/
                              modal dismissal (Escape/backdrop/close-button), sortable-table
                              helper, idle-timeout auto logout
   css/style.css             NSA palette, sidebar layout, responsive + dark-mode styles
-  assets/nsa-logo.webp      Provided NSA logo asset
+  assets/nsa-logo.webp      NSA logo — white/transparent variant, for navy surfaces
+  assets/nsa-logo-color.svg  NSA logo — full-color variant, for light surfaces + favicon
 docs/screenshots/          Screenshots used in this README
 test/employees.test.js     Unit tests — employee CRUD, department FK behavior
 test/auth.test.js          Unit tests — password hashing, complexity policy, email validation
