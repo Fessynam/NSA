@@ -1,0 +1,6 @@
+node_modules/
+ems.db
+
+# Raw logo file as originally supplied — the app actually uses the copy
+# committed at public/assets/nsa-logo.webp
+/NSA logo/

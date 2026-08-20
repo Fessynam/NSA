@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo.webp" />
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="logo-badge" id="logo-slot"></div>
+      <h1>Employee Management System</h1>
+      <p class="tagline">Secure Access Portal</p>
+
+      <div class="error-msg" id="error-msg"></div>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="username" autocomplete="username" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="password" autocomplete="current-password" required />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">Log in</button>
+      </form>
+
+      <div class="hint">
+        <div class="hint-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Demo credentials
+        </div>
+        <div class="hint-value"><code>admin</code> <span>/</span> <code>admin123</code></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    document.getElementById('logo-slot').innerHTML = LOGO_IMG;
+
+    if (getToken()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error-msg');
+      const btn = document.getElementById('login-btn');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+
+        localStorage.setItem('ems_token', data.token);
+        localStorage.setItem('ems_username', data.username);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Log in';
+      }
+    });
+  </script>
+</body>
+</html>

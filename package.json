@@ -1,0 +1,14 @@
+{
+  "name": "employee-management-system",
+  "version": "1.0.0",
+  "description": "Simple Employee Management System (Section B Practical)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

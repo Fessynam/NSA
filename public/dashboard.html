@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo.webp" />
+</head>
+<body>
+  <div class="app-shell">
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>Dashboard</h1>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="employee-count">—</div>
+        <div class="stat-label">Total Employees</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="department-count">—</div>
+        <div class="stat-label">Total Departments</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <p style="margin-top:0;">Welcome back, <strong id="welcome-name"></strong>. Use the sidebar to manage employees and departments.</p>
+      <div style="display:flex; gap:0.6rem; flex-wrap: wrap;">
+        <a href="employees.html" class="btn btn-primary">Manage Employees</a>
+        <a href="departments.html" class="btn btn-outline">Manage Departments</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <h2 class="section-title">Employees by Department</h2>
+      <div id="dept-breakdown"></div>
+    </div>
+  </main>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    requireAuthOrRedirect();
+    renderSidebar('dashboard');
+    document.getElementById('welcome-name').textContent = getUsername();
+
+    (async () => {
+      try {
+        const [employees, departments] = await Promise.all([
+          apiFetch('/employees'),
+          apiFetch('/departments')
+        ]);
+        document.getElementById('employee-count').textContent = employees.length;
+        document.getElementById('department-count').textContent = departments.length;
+
+        const countByDept = {};
+        employees.forEach(e => {
+          if (e.department_id) countByDept[e.department_id] = (countByDept[e.department_id] || 0) + 1;
+        });
+        const maxCount = Math.max(1, ...departments.map(d => countByDept[d.id] || 0));
+
+        const breakdownEl = document.getElementById('dept-breakdown');
+        if (departments.length === 0) {
+          breakdownEl.innerHTML = '<p style="color:#8b93a1;">No departments yet.</p>';
+        } else {
+          breakdownEl.innerHTML = departments.map(d => {
+            const count = countByDept[d.id] || 0;
+            const pct = Math.round((count / maxCount) * 100);
+            return `
+              <div class="dept-bar-row">
+                <span>${escapeHtml(d.name)}</span>
+                <span class="dept-bar-track"><span class="dept-bar-fill" style="width:${pct}%"></span></span>
+                <span>${count}</span>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employees — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo.webp" />
+</head>
+<body>
+  <div class="app-shell">
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>Employees</h1>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn btn-outline" id="export-csv-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>
+        <button class="btn btn-gold" id="add-employee-btn">+ Add Employee</button>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search by name, email, position, or department..." />
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead id="employees-thead">
+            <tr>
+              <th data-sort="name">Name</th>
+              <th data-sort="email">Email</th>
+              <th data-sort="position">Position</th>
+              <th data-sort="department_name">Department</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employees-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="empty-state" style="display:none;">No employees found.</div>
+    </div>
+  </main>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" id="form-modal-overlay">
+    <div class="modal">
+      <h2 id="form-modal-title">Add Employee</h2>
+      <form id="employee-form">
+        <input type="hidden" id="employee-id" />
+        <div class="field">
+          <label for="emp-name">Name</label>
+          <input type="text" id="emp-name" required />
+        </div>
+        <div class="field">
+          <label for="emp-email">Email</label>
+          <input type="email" id="emp-email" required />
+        </div>
+        <div class="field">
+          <label for="emp-position">Position</label>
+          <input type="text" id="emp-position" />
+        </div>
+        <div class="field">
+          <label for="emp-department">Department</label>
+          <select id="emp-department">
+            <option value="">— None —</option>
+          </select>
+        </div>
+        <div class="error-msg" id="form-error"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="cancel-form-btn" data-dismiss>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detail View Modal -->
+  <div class="modal-overlay" id="detail-modal-overlay">
+    <div class="modal">
+      <h2>Employee Details</h2>
+      <div id="detail-content"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="close-detail-btn" data-dismiss>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/employees.js"></script>
+</body>
+</html>
