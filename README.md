@@ -2,6 +2,50 @@
 
 An Employee Management System built for Section B (Practical) of the assessment: login, full Employee CRUD, full Department CRUD, a SQL database with proper foreign-key relationships, and a responsive UI matching the Namibia Statistics Agency (NSA) brand — extended with real account security (hashed passwords, login lockout, forgot/reset password), role-based access control, and a system-wide audit log.
 
+## Quick Start — Step by Step
+
+New to this project? Follow these exactly, in order.
+
+1. **Get the code onto your machine.**
+   ```bash
+   git clone https://github.com/Fessynam/NSA.git
+   cd NSA
+   ```
+   (Already have it downloaded/unzipped instead of cloning? Just `cd` into that folder and skip to step 2.)
+
+2. **Install dependencies.** Requires Node.js 22 or newer (check with `node -v`).
+   ```bash
+   npm install
+   ```
+
+3. **Start the server.**
+   ```bash
+   npm start
+   ```
+   You should see: `Employee Management System running at http://localhost:3000`. Leave this terminal window open — the app runs as long as this command is running. (A SQLite database file, `ems.db`, is created and auto-filled with sample data the first time this runs — no separate database setup needed.)
+
+4. **Open the app.** In your browser, go to: **http://localhost:3000**
+
+5. **Log in.** Use either set of credentials — both work:
+   | Username or Email | Password |
+   |---|---|
+   | `festus.alpheus` | `NSA@2026` |
+   | `admin` | `admin123` |
+
+   Type one into "Username or Email", the matching password below it, and click **Sign in**.
+
+6. **You're in.** You'll land on the **Dashboard**. From the left sidebar you can reach:
+   - **Employees** — view/add/edit/delete employee records
+   - **Departments** — view/add/edit/delete departments
+   - **Activity Log** — a full audit trail (who did what, when)
+   - **Settings** — manage other user accounts and system-wide config
+   - **My Profile** — update your own details or password
+   - **Log out** — bottom of the sidebar, when you're done
+
+7. **To stop the server** later, go back to the terminal from step 3 and press `Ctrl+C`.
+
+That's the whole flow. Everything below documents what each part does in more detail.
+
 ## Screenshots
 
 | Login | Dashboard |
@@ -24,9 +68,9 @@ An Employee Management System built for Section B (Practical) of the assessment:
 |---|
 | ![Dashboard in dark mode](docs/screenshots/08-dashboard-dark.png) |
 
-| Mobile / responsive |
-|---|
-| ![Mobile view of the dashboard](docs/screenshots/09-mobile.png) |
+| Mobile / responsive | My Profile |
+|---|---|
+| ![Mobile view of the dashboard](docs/screenshots/09-mobile.png) | ![My Profile page](docs/screenshots/10-profile.png) |
 
 ## Section A
 
@@ -83,9 +127,10 @@ Login accepts **either** the username or the email — whichever is typed, as lo
 6. **Settings** (Admin only):
    - **User Accounts** — add, edit, or remove login accounts, each with a first name, surname, email, phone number, and a role (Admin / Support / Viewer). New accounts require accepting the Terms of Use and a password meeting the complexity policy. **Reset Password** generates a fresh reset link for that user (same dev-mode display as the login page's forgot-password flow).
    - **System Configuration** — edit the organization name and support email shown across the app.
-7. **Theme toggle** (bottom of sidebar) switches between light and dark mode; the choice is remembered across visits.
-8. Every modal can be closed with its **Cancel/Close** button, the **Escape** key, or by clicking outside it on the backdrop.
-9. **Log out** (bottom of sidebar) clears the session and returns to the login screen.
+7. **My Profile** (every role) — update your own name/username/email/phone, change your own password (requires your current password first), and see your own recent login/activity history.
+8. **Theme toggle** (bottom of sidebar) switches between light and dark mode; the choice is remembered across visits.
+9. Every modal can be closed with its **Cancel/Close** button, the **Escape** key, or by clicking outside it on the backdrop.
+10. **Log out** (bottom of sidebar) clears the session and returns to the login screen.
 
 ## Roles & Permissions
 
