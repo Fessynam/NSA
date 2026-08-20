@@ -112,6 +112,13 @@ function seedIfEmpty() {
       INSERT INTO users (first_name, last_name, username, email, phone, password_hash, password_salt, role, active)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', 1)
     `).run('Festus', 'Alpheus', 'festus.alpheus', 'festus@nsa.com.na', '+264 81 000 0000', hash, salt);
+
+    // Fallback admin matching the assessment sheet's example credentials exactly.
+    const fallback = hashPassword('admin123');
+    db.prepare(`
+      INSERT INTO users (first_name, last_name, username, email, phone, password_hash, password_salt, role, active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', 1)
+    `).run('Admin', 'User', 'admin', 'admin@nsa.com.na', '', fallback.hash, fallback.salt);
   }
 
   const settingsCount = db.prepare('SELECT COUNT(*) AS c FROM settings').get().c;

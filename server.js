@@ -63,6 +63,8 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Your session expired due to inactivity. Please log in again.' });
   }
   session.lastActivity = Date.now(); // sliding expiration: any activity extends the session
+  req.token = token;
+  req.userId = session.id;
   req.userEmail = session.email;
   req.userRole = session.role;
   next();
@@ -133,7 +135,7 @@ app.post('/api/login', rateLimit('login', 20, 5 * 60 * 1000), (req, res) => {
 
   clearAttempts(lockKey);
   const token = crypto.randomBytes(24).toString('hex');
-  activeTokens.set(token, { email: user.email, role: user.role, lastActivity: Date.now() });
+  activeTokens.set(token, { id: user.id, email: user.email, role: user.role, lastActivity: Date.now() });
   logActivity(user.email, 'login', 'Successful login');
   res.json({
     token,
@@ -290,6 +292,56 @@ app.delete('/api/users/:id', requireAuth, requireRole('admin'), (req, res) => {
   db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
   logActivity(req.userEmail, 'user_deleted', `Deleted user ${target.email}`);
   res.json({ ok: true });
+});
+
+// --- My Profile --- (self-service, any authenticated role manages only their own account)
+app.get('/api/me', requireAuth, (req, res) => {
+  const user = db.prepare(`${userSelect} WHERE id = ?`).get(req.userId);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  res.json(user);
+});
+
+app.put('/api/me', requireAuth, (req, res) => {
+  const { first_name, last_name, username, email, phone } = req.body || {};
+  if (!first_name || !last_name || !username || !email) {
+    return res.status(400).json({ error: 'First name, last name, username, and email are required' });
+  }
+  if (!isValidUsername(username)) return res.status(400).json({ error: `Invalid username. ${USERNAME_RULE_TEXT}` });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address' });
+
+  try {
+    db.prepare('UPDATE users SET first_name = ?, last_name = ?, username = ?, email = ?, phone = ? WHERE id = ?')
+      .run(first_name, last_name, username, email, phone || '', req.userId);
+    const session = activeTokens.get(req.token);
+    if (session) session.email = email; // keep this session's identity in sync if the email changed
+    logActivity(email, 'profile_updated', 'Updated own profile');
+    res.json({ id: req.userId, first_name, last_name, username, email, phone });
+  } catch (err) {
+    res.status(400).json({ error: 'That username or email is already taken by another account' });
+  }
+});
+
+app.put('/api/me/password', requireAuth, (req, res) => {
+  const { current_password, new_password } = req.body || {};
+  if (!current_password || !new_password) return res.status(400).json({ error: 'Current and new password are required' });
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+  if (!user || !verifyPassword(current_password, user.password_hash, user.password_salt)) {
+    return res.status(400).json({ error: 'Current password is incorrect' });
+  }
+  if (!validatePasswordComplexity(new_password)) {
+    return res.status(400).json({ error: `Password does not meet requirements. ${PASSWORD_RULE_TEXT}` });
+  }
+
+  const { hash, salt } = hashPassword(new_password);
+  db.prepare('UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?').run(hash, salt, req.userId);
+  logActivity(req.userEmail, 'password_changed', 'Changed own password');
+  res.json({ ok: true });
+});
+
+app.get('/api/me/activity', requireAuth, (req, res) => {
+  const logs = db.prepare('SELECT * FROM activity_log WHERE user_email = ? ORDER BY created_at DESC LIMIT 20').all(req.userEmail);
+  res.json(logs);
 });
 
 // --- Departments ---

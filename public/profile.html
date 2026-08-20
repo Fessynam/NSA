@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Profile — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo-color.svg" />
+</head>
+<body>
+  <div class="app-shell">
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>My Profile</h1>
+    </div>
+
+    <div class="card" style="max-width: 480px;">
+      <h2 class="section-title">Profile Info</h2>
+      <form id="profile-form">
+        <div style="display:flex; gap:0.75rem;">
+          <div class="field" style="flex:1;">
+            <label for="profile-first-name">First Name</label>
+            <input type="text" id="profile-first-name" required />
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="profile-last-name">Surname</label>
+            <input type="text" id="profile-last-name" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="profile-username">Username</label>
+          <input type="text" id="profile-username" required />
+        </div>
+        <div class="field">
+          <label for="profile-email">Email</label>
+          <input type="email" id="profile-email" required />
+        </div>
+        <div class="field">
+          <label for="profile-phone">Phone Number</label>
+          <input type="text" id="profile-phone" placeholder="+264 81 000 0000" />
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <input type="text" id="profile-role" disabled />
+        </div>
+        <div class="error-msg" id="profile-error"></div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+
+    <div class="card" style="max-width: 480px; margin-top: 1.5rem;">
+      <h2 class="section-title">Change Password</h2>
+      <form id="password-form">
+        <div class="field">
+          <label for="current-password">Current Password</label>
+          <input type="password" id="current-password" required />
+        </div>
+        <div class="field">
+          <label for="new-password">New Password</label>
+          <input type="password" id="new-password" required />
+        </div>
+        <div class="field">
+          <label for="confirm-new-password">Confirm New Password</label>
+          <input type="password" id="confirm-new-password" required />
+        </div>
+        <p class="password-rule">At least 8 characters, combining at least 3 of: uppercase, lowercase, numbers, symbols.</p>
+        <div class="error-msg" id="password-error"></div>
+        <button type="submit" class="btn btn-primary">Update Password</button>
+      </form>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <h2 class="section-title">My Recent Activity</h2>
+      <div id="my-activity-feed"></div>
+    </div>
+  </main>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

@@ -54,6 +54,7 @@ npm test
 | Username or Email | Password | Role |
 |---|---|---|
 | `festus.alpheus` or `festus@nsa.com.na` | `NSA@2026` | Admin |
+| `admin` | `admin123` | Admin (fallback, matches the assessment sheet's example) |
 
 Login accepts **either** the username or the email — whichever is typed, as long as the password matches. The account is seeded into the `users` table with a salted `scrypt` password hash (see `lib/auth.js` / `db.js`) — the plaintext password is never stored. Additional accounts (with Admin/Support/Viewer roles) can be created from **Settings** once logged in.
 
