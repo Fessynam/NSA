@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Activity Log — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo.webp" />
+</head>
+<body>
+  <div class="app-shell">
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>Activity Log</h1>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Filter by user or action..." />
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="empty-state" style="display:none;">No activity recorded yet.</div>
+    </div>
+  </main>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/activity-log.js"></script>
+</body>
+</html>

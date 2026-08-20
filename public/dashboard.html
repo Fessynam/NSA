@@ -46,7 +46,7 @@
   <script>
     requireAuthOrRedirect();
     renderSidebar('dashboard');
-    document.getElementById('welcome-name').textContent = getUsername();
+    document.getElementById('welcome-name').textContent = getFullName();
 
     (async () => {
       try {

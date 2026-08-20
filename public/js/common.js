@@ -6,7 +6,9 @@ const ICONS = {
   departments: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
   logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
   theme: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  activity: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`
 };
 
 function escapeHtml(str) {
@@ -19,14 +21,35 @@ function getToken() {
   return localStorage.getItem('ems_token');
 }
 
-function getUsername() {
-  return localStorage.getItem('ems_username') || 'admin';
+function getFullName() {
+  return localStorage.getItem('ems_full_name') || 'Admin';
+}
+
+function getEmail() {
+  return localStorage.getItem('ems_email') || '';
+}
+
+function getRole() {
+  return localStorage.getItem('ems_role') || 'viewer';
 }
 
 function requireAuthOrRedirect() {
   if (!getToken()) {
     window.location.href = 'index.html';
   }
+}
+
+function requireRoleOrRedirect(...roles) {
+  if (!roles.includes(getRole())) {
+    window.location.href = 'dashboard.html';
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem('ems_token');
+  localStorage.removeItem('ems_full_name');
+  localStorage.removeItem('ems_email');
+  localStorage.removeItem('ems_role');
 }
 
 async function apiFetch(path, options = {}) {
@@ -37,8 +60,7 @@ async function apiFetch(path, options = {}) {
   const res = await fetch(`/api${path}`, { ...options, headers });
 
   if (res.status === 401) {
-    localStorage.removeItem('ems_token');
-    localStorage.removeItem('ems_username');
+    clearSession();
     window.location.href = 'index.html';
     throw new Error('Unauthorized');
   }
@@ -57,8 +79,7 @@ function logout() {
   if (token) {
     fetch('/api/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
   }
-  localStorage.removeItem('ems_token');
-  localStorage.removeItem('ems_username');
+  clearSession();
   window.location.href = 'index.html';
 }
 
@@ -81,6 +102,10 @@ function toggleTheme() {
 function renderSidebar(activePage) {
   const el = document.getElementById('app-sidebar');
   if (!el) return;
+  const role = getRole();
+  const canSeeActivity = role === 'admin' || role === 'support';
+  const canSeeSettings = role === 'admin';
+
   el.innerHTML = `
     <div class="sidebar-brand">
       <span class="logo">${LOGO_IMG}</span>
@@ -93,19 +118,22 @@ function renderSidebar(activePage) {
       <a href="dashboard.html" class="${activePage === 'dashboard' ? 'active' : ''}">${ICONS.dashboard} Dashboard</a>
       <a href="employees.html" class="${activePage === 'employees' ? 'active' : ''}">${ICONS.employees} Employees</a>
       <a href="departments.html" class="${activePage === 'departments' ? 'active' : ''}">${ICONS.departments} Departments</a>
+      ${canSeeActivity ? `<a href="activity-log.html" class="${activePage === 'activity-log' ? 'active' : ''}">${ICONS.activity} Activity Log</a>` : ''}
+      ${canSeeSettings ? `<a href="settings.html" class="${activePage === 'settings' ? 'active' : ''}">${ICONS.settings} Settings</a>` : ''}
     </nav>
     <div class="sidebar-footer">
       <button class="icon-btn" id="theme-toggle-btn">${ICONS.theme} Toggle theme</button>
       <div class="sidebar-user">
-        <span class="badge" id="whoami"></span>
-        <button class="icon-btn" id="logout-btn">${ICONS.logout} Log out</button>
+        <span class="badge" id="whoami" title="${escapeHtml(getEmail())}"></span>
+        <span class="role-badge role-${escapeHtml(role)}">${escapeHtml(role)}</span>
       </div>
+      <button class="icon-btn" id="logout-btn">${ICONS.logout} Log out</button>
     </div>
   `;
   document.getElementById('logout-btn').addEventListener('click', logout);
   document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
   const who = document.getElementById('whoami');
-  if (who) who.textContent = getUsername();
+  if (who) who.textContent = getFullName();
 }
 
 /* --- Toast notifications --- */
@@ -220,6 +248,14 @@ function setupModalDismissal() {
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('open')) {
       dismissOverlay(e.target);
+      return;
+    }
+    // Any [data-dismiss] button closes its own overlay, even if the page
+    // never wired up a bespoke click handler for it.
+    const dismissTarget = e.target.closest('[data-dismiss]');
+    if (dismissTarget) {
+      const overlay = dismissTarget.closest('.modal-overlay');
+      if (overlay) overlay.classList.remove('open');
     }
   });
 }

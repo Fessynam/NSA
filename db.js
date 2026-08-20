@@ -1,5 +1,6 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
+const { hashPassword } = require('./lib/auth');
 
 const db = new DatabaseSync(path.join(__dirname, 'ems.db'));
 
@@ -21,8 +22,37 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    phone TEXT,
+    password_hash TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'admin',
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT,
+    action TEXT NOT NULL,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
   );
 `);
 
@@ -60,7 +90,18 @@ function seedIfEmpty() {
 
   const userCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
   if (userCount === 0) {
-    db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run('admin', 'admin123');
+    const { hash, salt } = hashPassword('NSA@2026');
+    db.prepare(`
+      INSERT INTO users (first_name, last_name, email, phone, password_hash, password_salt, role, active)
+      VALUES (?, ?, ?, ?, ?, ?, 'admin', 1)
+    `).run('Festus', 'Alpheus', 'festus@nsa.com.na', '+264 81 000 0000', hash, salt);
+  }
+
+  const settingsCount = db.prepare('SELECT COUNT(*) AS c FROM settings').get().c;
+  if (settingsCount === 0) {
+    const insertSetting = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
+    insertSetting.run('org_name', 'Namibia Statistics Agency');
+    insertSetting.run('support_email', 'support@nsa.com.na');
   }
 }
 

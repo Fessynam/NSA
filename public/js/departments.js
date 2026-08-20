@@ -1,6 +1,11 @@
 requireAuthOrRedirect();
 renderSidebar('departments');
 
+const canEditDepartments = getRole() === 'admin' || getRole() === 'support';
+if (!canEditDepartments) {
+  document.getElementById('add-department-btn').style.display = 'none';
+}
+
 async function loadDepartments() {
   const [departments, employees] = await Promise.all([
     apiFetch('/departments'),
@@ -29,8 +34,10 @@ async function loadDepartments() {
       <td><span class="badge">${countByDept[dept.id] || 0}</span></td>
       <td class="actions-cell">
         <button class="btn btn-outline btn-sm" onclick="viewDepartment(${dept.id})">View</button>
-        <button class="btn btn-outline btn-sm" onclick="editDepartment(${dept.id})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteDepartment(${dept.id})">Delete</button>
+        ${canEditDepartments ? `
+          <button class="btn btn-outline btn-sm" onclick="editDepartment(${dept.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDepartment(${dept.id})">Delete</button>
+        ` : ''}
       </td>
     </tr>
   `).join('');

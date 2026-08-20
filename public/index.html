@@ -9,37 +9,123 @@
 </head>
 <body>
   <div class="login-shell">
+    <div class="floating-card fc-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Employee Records</span></div>
+    <div class="floating-card fc-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Departments</span></div>
+    <div class="floating-card fc-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Secure Access</span></div>
+    <div class="floating-card fc-4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Activity Logs</span></div>
+
     <div class="login-card">
       <div class="logo-badge" id="logo-slot"></div>
-      <h1>Employee Management System</h1>
-      <p class="tagline">Secure Access Portal</p>
 
-      <div class="error-msg" id="error-msg"></div>
+      <!-- Login panel -->
+      <div id="panel-login">
+        <h1>Employee Management System</h1>
+        <p class="tagline">Secure Access Portal</p>
 
-      <form id="login-form">
-        <div class="field">
-          <label for="username">Username</label>
-          <div class="input-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <input type="text" id="username" autocomplete="username" required />
+        <div class="error-msg" id="error-msg"></div>
+
+        <form id="login-form">
+          <div class="field">
+            <label for="email">Email</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+              <input type="email" id="email" autocomplete="username" required />
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <div class="input-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input type="password" id="password" autocomplete="current-password" required />
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="password" autocomplete="current-password" required />
+            </div>
           </div>
-        </div>
-        <button type="submit" class="btn btn-primary" id="login-btn">Log in</button>
-      </form>
+          <button type="submit" class="btn btn-primary" id="login-btn">Log in</button>
+        </form>
 
-      <div class="hint">
-        <div class="hint-label">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Demo credentials
+        <div class="login-links">
+          <a href="#" id="forgot-link">Forgot password?</a>
+          <span>·</span>
+          <a href="#" id="terms-link">Terms of Use</a>
         </div>
-        <div class="hint-value"><code>admin</code> <span>/</span> <code>admin123</code></div>
+
+        <div class="hint">
+          <div class="hint-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Demo credentials
+          </div>
+          <div class="hint-value"><code>festus@nsa.com.na</code></div>
+          <div class="hint-value"><code>NSA@2026</code></div>
+        </div>
+
+        <p class="support-line">Trouble logging in? Contact <a href="mailto:support@nsa.com.na">support@nsa.com.na</a></p>
+      </div>
+
+      <!-- Forgot password panel -->
+      <div id="panel-forgot" style="display:none;">
+        <h1>Reset your password</h1>
+        <p class="tagline">We'll help you get back in</p>
+
+        <div class="error-msg" id="forgot-error"></div>
+        <div class="success-msg" id="forgot-success"></div>
+
+        <form id="forgot-form">
+          <div class="field">
+            <label for="forgot-email">Email</label>
+            <input type="email" id="forgot-email" required />
+          </div>
+          <button type="submit" class="btn btn-primary" id="forgot-btn">Send reset link</button>
+        </form>
+
+        <div id="dev-reset-box" style="display:none;"></div>
+
+        <div class="login-links">
+          <a href="#" id="back-to-login-1">Back to login</a>
+        </div>
+      </div>
+
+      <!-- Reset password panel -->
+      <div id="panel-reset" style="display:none;">
+        <h1>Set a new password</h1>
+        <p class="tagline">Choose something you haven't used before</p>
+
+        <div class="error-msg" id="reset-error"></div>
+
+        <form id="reset-form">
+          <div class="field">
+            <label for="new-password">New password</label>
+            <input type="password" id="new-password" required />
+          </div>
+          <div class="field">
+            <label for="confirm-password">Confirm password</label>
+            <input type="password" id="confirm-password" required />
+          </div>
+          <p class="password-rule">At least 8 characters, combining at least 3 of: uppercase, lowercase, numbers, symbols.</p>
+          <button type="submit" class="btn btn-primary" id="reset-btn">Update password</button>
+        </form>
+
+        <div class="login-links">
+          <a href="#" id="back-to-login-2">Back to login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terms of Use modal -->
+  <div class="modal-overlay" id="terms-modal-overlay">
+    <div class="modal">
+      <h2>Terms of Use</h2>
+      <div class="terms-text">
+        <p>This system is provided for authorized personnel of the Namibia Statistics Agency (NSA) only. By logging in, you agree to:</p>
+        <ul>
+          <li>Use this system solely for legitimate employee-management purposes.</li>
+          <li>Keep your login credentials confidential and never share your account.</li>
+          <li>Report any suspected unauthorized access to <a href="mailto:support@nsa.com.na">support@nsa.com.na</a> immediately.</li>
+          <li>Understand that activity on this system is logged for audit and security purposes.</li>
+        </ul>
+        <p>This is placeholder text for demonstration purposes as part of a practical assessment.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="close-terms-btn" data-dismiss>Close</button>
       </div>
     </div>
   </div>
@@ -48,13 +134,45 @@
   <script>
     document.getElementById('logo-slot').innerHTML = LOGO_IMG;
 
-    if (getToken()) {
+    function showPanel(name) {
+      document.getElementById('panel-login').style.display = name === 'login' ? '' : 'none';
+      document.getElementById('panel-forgot').style.display = name === 'forgot' ? '' : 'none';
+      document.getElementById('panel-reset').style.display = name === 'reset' ? '' : 'none';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('reset_token');
+
+    if (getToken() && !resetToken) {
       window.location.href = 'dashboard.html';
     }
 
+    if (resetToken) {
+      showPanel('reset');
+    }
+
+    document.getElementById('forgot-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      showPanel('forgot');
+    });
+    document.getElementById('back-to-login-1').addEventListener('click', (e) => {
+      e.preventDefault();
+      showPanel('login');
+    });
+    document.getElementById('back-to-login-2').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = 'index.html';
+    });
+
+    document.getElementById('terms-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('terms-modal-overlay').classList.add('open');
+    });
+
+    // --- Login ---
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const errorEl = document.getElementById('error-msg');
       const btn = document.getElementById('login-btn');
@@ -66,19 +184,100 @@
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ email, password })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
 
         localStorage.setItem('ems_token', data.token);
-        localStorage.setItem('ems_username', data.username);
+        localStorage.setItem('ems_email', data.email);
+        localStorage.setItem('ems_full_name', data.full_name);
+        localStorage.setItem('ems_role', data.role);
         window.location.href = 'dashboard.html';
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Log in';
+      }
+    });
+
+    // --- Forgot password ---
+    document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      const errorEl = document.getElementById('forgot-error');
+      const successEl = document.getElementById('forgot-success');
+      const devBox = document.getElementById('dev-reset-box');
+      const btn = document.getElementById('forgot-btn');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      devBox.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch('/api/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+        successEl.textContent = data.message;
+        successEl.style.display = 'block';
+
+        if (data.reset_link) {
+          devBox.innerHTML = `
+            <p class="dev-note">${escapeHtml(data.dev_note)}</p>
+            <a class="btn btn-outline" style="width:100%; justify-content:center; margin-top:0.5rem;" href="${data.reset_link}">Open reset link (dev mode)</a>
+          `;
+          devBox.style.display = 'block';
+        }
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send reset link';
+      }
+    });
+
+    // --- Reset password ---
+    document.getElementById('reset-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('new-password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const errorEl = document.getElementById('reset-error');
+      const btn = document.getElementById('reset-btn');
+      errorEl.style.display = 'none';
+
+      if (password !== confirm) {
+        errorEl.textContent = 'Passwords do not match.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Updating…';
+
+      try {
+        const res = await fetch('/api/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: resetToken, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+        showToast('Password updated — you can log in now');
+        window.location.href = 'index.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Update password';
       }
     });
   </script>

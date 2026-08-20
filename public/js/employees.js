@@ -1,6 +1,11 @@
 requireAuthOrRedirect();
 renderSidebar('employees');
 
+const canEditEmployees = getRole() === 'admin' || getRole() === 'support';
+if (!canEditEmployees) {
+  document.getElementById('add-employee-btn').style.display = 'none';
+}
+
 let departmentsCache = [];
 let lastLoadedEmployees = [];
 let currentSort = { key: null, dir: 1 };
@@ -31,8 +36,10 @@ function renderEmployeeRows(employees) {
       <td>${emp.department_name ? `<span class="badge">${escapeHtml(emp.department_name)}</span>` : '<span style="color:#8b93a1;">Unassigned</span>'}</td>
       <td class="actions-cell">
         <button class="btn btn-outline btn-sm" onclick="viewEmployee(${emp.id})">View</button>
-        <button class="btn btn-outline btn-sm" onclick="editEmployee(${emp.id})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})">Delete</button>
+        ${canEditEmployees ? `
+          <button class="btn btn-outline btn-sm" onclick="editEmployee(${emp.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})">Delete</button>
+        ` : ''}
       </td>
     </tr>
   `).join('');

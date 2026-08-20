@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings — NSA Employee Management System</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="assets/nsa-logo.webp" />
+</head>
+<body>
+  <div class="app-shell">
+  <aside class="sidebar" id="app-sidebar"></aside>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>Settings</h1>
+    </div>
+
+    <div class="card">
+      <div class="page-header" style="margin-bottom: 1rem;">
+        <h2 class="section-title" style="margin:0;">User Accounts</h2>
+        <button class="btn btn-gold" id="add-user-btn">+ Add User</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="users-empty-state" style="display:none;">No users found.</div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem; max-width: 480px;">
+      <h2 class="section-title">System Configuration</h2>
+      <form id="settings-form">
+        <div class="field">
+          <label for="org-name">Organization Name</label>
+          <input type="text" id="org-name" required />
+        </div>
+        <div class="field">
+          <label for="support-email">Support Email</label>
+          <input type="email" id="support-email" required />
+        </div>
+        <div class="error-msg" id="settings-error"></div>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </form>
+    </div>
+  </main>
+  </div>
+
+  <!-- Add/Edit User Modal -->
+  <div class="modal-overlay" id="form-modal-overlay">
+    <div class="modal">
+      <h2 id="form-modal-title">Add User</h2>
+      <form id="user-form">
+        <input type="hidden" id="user-id" />
+        <div style="display:flex; gap:0.75rem;">
+          <div class="field" style="flex:1;">
+            <label for="user-first-name">First Name</label>
+            <input type="text" id="user-first-name" required />
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="user-last-name">Surname</label>
+            <input type="text" id="user-last-name" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="user-email">Email</label>
+          <input type="email" id="user-email" required />
+        </div>
+        <div class="field">
+          <label for="user-phone">Phone Number</label>
+          <input type="text" id="user-phone" placeholder="+264 81 000 0000" />
+        </div>
+        <div class="field">
+          <label for="user-role">Role</label>
+          <select id="user-role">
+            <option value="viewer">Viewer — read-only access</option>
+            <option value="support">Support — can manage employees &amp; departments</option>
+            <option value="admin">Admin — full access, including Settings</option>
+          </select>
+        </div>
+        <div id="password-fields">
+          <div class="field">
+            <label for="user-password">Password</label>
+            <input type="password" id="user-password" />
+          </div>
+          <p class="password-rule">At least 8 characters, combining at least 3 of: uppercase, lowercase, numbers, symbols.</p>
+          <div class="field" id="terms-field">
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;">
+              <input type="checkbox" id="user-terms" style="width:auto;" />
+              I confirm this account holder has accepted the <a href="#" id="open-terms-from-form">Terms of Use</a>
+            </label>
+          </div>
+        </div>
+        <div class="field" id="active-field" style="display:none;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;">
+            <input type="checkbox" id="user-active" style="width:auto;" checked />
+            Account active
+          </label>
+        </div>
+        <div class="error-msg" id="form-error"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="cancel-form-btn" data-dismiss>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Terms of Use modal (reused) -->
+  <div class="modal-overlay" id="terms-modal-overlay">
+    <div class="modal">
+      <h2>Terms of Use</h2>
+      <div class="terms-text">
+        <p>This system is provided for authorized personnel of the Namibia Statistics Agency (NSA) only. By holding an account, the user agrees to:</p>
+        <ul>
+          <li>Use this system solely for legitimate employee-management purposes.</li>
+          <li>Keep their login credentials confidential and never share their account.</li>
+          <li>Report any suspected unauthorized access to <a href="mailto:support@nsa.com.na">support@nsa.com.na</a> immediately.</li>
+          <li>Understand that activity on this system is logged for audit and security purposes.</li>
+        </ul>
+        <p>This is placeholder text for demonstration purposes as part of a practical assessment.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="close-terms-btn" data-dismiss>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password reset link modal -->
+  <div class="modal-overlay" id="reset-link-modal-overlay">
+    <div class="modal">
+      <h2>Password Reset Link</h2>
+      <p id="reset-link-message"></p>
+      <div id="reset-link-box"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="close-reset-link-btn" data-dismiss>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

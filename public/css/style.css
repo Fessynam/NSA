@@ -521,6 +521,105 @@ th.sortable[data-dir="desc"]::after { content: "↓"; opacity: 1; color: var(--n
 
 .hint-value span { color: #97a1af; margin: 0 0.15rem; }
 
+/* --- Floating decorative cards on login --- */
+.floating-card {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
+  color: var(--nsa-white);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+  animation: float-card 7s ease-in-out infinite;
+  pointer-events: none;
+}
+.floating-card svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.85; }
+
+.fc-1 { top: 14%; left: 9%; animation-delay: 0s; }
+.fc-2 { top: 22%; right: 10%; animation-delay: 1.6s; }
+.fc-3 { bottom: 20%; left: 11%; animation-delay: 3.2s; }
+.fc-4 { bottom: 14%; right: 9%; animation-delay: 4.8s; }
+
+@keyframes float-card {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(1.2deg); }
+}
+
+@media (max-width: 980px) {
+  .floating-card { display: none; }
+}
+
+.login-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+}
+.login-links a { color: var(--nsa-navy); text-decoration: none; font-weight: 600; }
+.login-links a:hover { text-decoration: underline; }
+.login-links span { color: #c3c9d2; }
+
+.success-msg {
+  background: #eef8f0;
+  color: #1e7a34;
+  border: 1px solid #bfe4c8;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+  display: none;
+  text-align: left;
+}
+
+.password-rule {
+  font-size: 0.72rem;
+  color: #8b93a1;
+  margin: -0.5rem 0 0.9rem;
+  text-align: left;
+}
+
+.dev-note {
+  font-size: 0.72rem;
+  color: #8b93a1;
+  text-align: left;
+  margin: 0;
+}
+
+.support-line {
+  margin-top: 1.25rem;
+  font-size: 0.75rem;
+  color: #8b93a1;
+  text-align: center;
+}
+.support-line a { color: var(--nsa-navy); font-weight: 600; }
+
+.terms-text { font-size: 0.85rem; line-height: 1.6; max-height: 50vh; overflow-y: auto; }
+.terms-text ul { padding-left: 1.2rem; }
+.terms-text li { margin-bottom: 0.4rem; }
+
+/* --- Role badges --- */
+.role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.role-admin { background: rgba(169,130,46,0.25); color: #e8c874; }
+.role-support { background: rgba(255,255,255,0.15); color: var(--nsa-white); }
+.role-viewer { background: rgba(255,255,255,0.08); color: #b7bfcb; }
+
 /* --- Modal --- */
 .modal-overlay {
   position: fixed;
